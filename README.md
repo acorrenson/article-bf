@@ -50,9 +50,9 @@ Nous constatons déjà que les instructions de Eva ou de Brainfuck sont à peu p
 
 # Méthode
 
-## Choix d'implementation
+## Choix d'implémentation
 
-Pour éxécuter des programmes Brainfuck sur la machine virtuelle Eva, deux solutions s'offraient à nous. La première aurait été d'écrire une deuxième machine virtuelle en langage Eva et capable d'interpréter le langage brainfuck. On aurait donc fait tourner une VM brainfuck dans une VM Eva.
+Pour exécuter des programmes Brainfuck sur la machine virtuelle Eva, deux solutions s'offraient à nous. La première aurait été d'écrire une deuxième machine virtuelle en langage Eva et capable d'interpréter le langage brainfuck. On aurait donc fait tourner une VM brainfuck dans une VM Eva.
 
 Une deuxième option étant d'écrire un compilateur capable de traduire le langage Brainfuck en langage Eva. Nous avons décidé de choisir cette alternative, un peu moins dépendante des éventuels défauts du langage Eva encore en cours de conception. Le compilateur est donc implémenté dans un troisième langage (Rust).
 
@@ -68,10 +68,10 @@ La traduction à proprement parler des programmes brainfuck se décompose en plu
 Program(Incr, Incr, Incr, Loop(Decr, Shift_right, Incr, Shift_left))
 ```
 
-On remarque que l'analyse est un peu plus raffiné qu'une simple lecture instruction par instruction. Dans le cas des boucles, on construit une instruction abstraite `Loop` dans laquelle on place la séquence d'instruction à répéter. Ceci nous amène droit à une première étape dans l'écriture du compilateur : la définition des types pour représenter les programmes. La structure générale d'un programme brainfuck est la suivante : 
+On remarque que l'analyse est un peu plus raffiné qu'une simple lecture instruction par instruction. Dans le cas des boucles, on construit une instruction abstraite `Loop` dans laquelle on place la séquence d'instruction à répéter. Ceci nous amène droit à une première étape dans l'écriture du compilateur : la définition des types pour représenter les programmes. La structure générale d'un programme brainfuck est la suivante :
 
 + Un programme est une suite d'instructions
-+ `Incr` `Decr` `Shift_left` `Shift_right` `Input` `Output` sont des instruction élémentaires
++ `Incr` `Decr` `Shift_left` `Shift_right` `Input` `Output` sont des instructions élémentaires
 + `Loop` est une instruction composée d'une liste d'autres instructions
 
 Pour aller un peu plus loin, nous pouvons traduire cette première intuition de manière plus formelle en proposant une grammaire du langage brainfuck :
@@ -107,16 +107,16 @@ pub enum Command {
 	Dec,
 	Shift,
 	Unshift,
-	Loop(Box<Vec<Command>>)
+	Loop(Vec<Command>)
 	Input,
 	Output,
 }
 
 // alias pour le type "Program"
-pub Program = Box<Vec<Command>>
+pub Program = Vec<Command>
 ```
 
-On accompagnera cette définition de type d'un analyseur syntaxique construit à l'aider du module spécialisé [rust-peg](https://github.com/kevinmehall/rust-peg)
+On accompagnera cette définition de type d'un analyseur syntaxique construit à l'aider du module spécialisé [rust-peg](https://github.com/kevinmehall/rust-peg) :
 
 
 ```rust
@@ -131,7 +131,10 @@ peg::parser! {
 		rule input()    -> Command = "," {Command::Input}
 		rule output()   -> Command = "." {Command::Output}
 
-		rule lop()      -> Command = ws() "["  ws() l:(inc() / dec() / shift_l() / shift_r() / input() / output() / lop())+ ws() "]" ws() {
+		// note: lop est écrit avec un seul o car loop est un mot-clé de Rust et n'est donc pas disponible
+		rule lop()      -> Command
+			= ws() "["  ws() l:(inc() / dec() / shift_l() / shift_r() / input()
+							   / output() / lop())+ ws() "]" ws() {
 			Command::Loop(Box::from(l))
 		}
 
@@ -139,7 +142,7 @@ peg::parser! {
 			c
 		}
 
-		pub rule program() -> Program = ws() p:(command() / lop())+ ws() { Program::Program(Box::from(p)) }
+		pub rule program() -> Program = ws() p:(command() / lop())+ ws() { Program::Program(p) }
 	}
 }
 ```
@@ -150,4 +153,3 @@ peg::parser! {
 + [Brainfuck - Wikipédia](https://en.wikipedia.org/wiki/Brainfuck)
 
 + [Formal Grammar - Wikipédia](https://en.wikipedia.org/wiki/Formal_grammar)
-
