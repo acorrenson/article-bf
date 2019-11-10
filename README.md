@@ -2,7 +2,7 @@
 
 # Introduction
 
-Brainfuck est un language de programmation quelque peu ésotérique désigné par **Urban **Müller**** en 1992. Les programmes brainfuck ne sont composés que des caractères **+**, **-**, **<**, **>**, **[**, **]**, **.** et **,**.
+Brainfuck est un langage de programmation quelque peu ésotérique désigné par **Urban **Müller**** en 1992. Les programmes brainfuck ne sont composés que des caractères **+**, **-**, **<**, **>**, **[**, **]**, **.** et **,**.
 
 Voici un exemple du fameux "hello world" en bf :
 
