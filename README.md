@@ -89,18 +89,18 @@ loop -> Loop_begin program Loop_end
 # une instruction est soit un symbol élémentaire du langage
 # soit une boucle while
 instruction -> Incr
-						-> Decr
-						-> Shift_left
-						-> Shift_right
-						-> Input
-						-> Output
-						-> loop
+instruction -> Decr
+instruction -> Shift_left
+instruction -> Shift_right
+instruction -> Input
+instruction -> Output
+instruction -> loop
 
 # un programme peut se définir inductivement :
 # Ou bien c'est une instruction seule,
 # Ou c'est une instruction suivie d'un programme plus petit.
 program -> instruction
-				-> instruction program
+program -> instruction program
 ```
 
 **Remarque** : On a ici nommé les symboles élémentaires du langage Brainfuck pour garder une cohérence avec les [déclarations de types]() qui suivront.
@@ -183,6 +183,7 @@ Avant d'entamer les détails de l'implementation d'une telle fonction, rappelons
 + La mémoire de la machine Eva est utilisée à la fois pour charger le programme, et comme zone de lecture /écriture pour les programmes brainfuck. Les mots mémoire de Eva ont une taille de 32-bits, par soucis de simplicité, nous avons donc fixé la taille des cellules à 32 bits pour avoir une équivalence directe entre cellule mémoire au sens de brainfuck et unité de mémoire au sens de Eva. Notons que les machines Brainfuck mettent généralement à disposition des cellules de 8 bits (juste assez pour contenir des caractères ascii).
 
 Un premier problème se pose déjà ! Si la mémoire de la machine Eva est à la fois le support de lecture écriture et le support de stockage des programmes, il faut assurer qu'aucune opération de modification de la mémoire ne sera réalisée sur la région contenant le programme lui même. Typiquement, il faudrait pouvoir éviter que l'instruction `+` ou `-` du langage Brainfuck ne soit exécutée alors que le *data pointer* pointe sur une case mémoire contenant.
+
 
 La structure des programmes Brainfuck étant définie de manière récursive, il est assez naturelle d'envisager cette fonction de transformation comme une fonction récursive. Nous procédons par filtrage sur le type `Program`.
 
