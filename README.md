@@ -1,4 +1,4 @@
-# Un compilateur brain-fuck ?
+# Un compilateur Brainfuck ?
 
 
 # Introduction
@@ -10,14 +10,14 @@ Voici un exemple du fameux "hello world" en bf :
 ```brainfuck
 ++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.>---.+++++++..+++.>>.<-.<.+++.------.--------.>>+.>++.
 ```
-Inutile donc de préciser que la syntaxe de ce langage est très peu adaptée à l'écriture de véritables programmes. En revanche, c'est un excellent joujou pour les curieux que nous sommes et il peut s'avérer très utiles dans certaines circonstances. Laissez nous vous expliquez pourquoi...
+Inutile donc de préciser que la syntaxe de ce langage est très peu adaptée à l'écriture de véritables programmes. En revanche, c'est un excellent joujou pour les curieux que nous sommes et il peut s'avérer très utiles dans certaines circonstances. Laissez-nous vous expliquez pourquoi...
 
 ## Un histoire de complétude ?
 
 Lorsque l'on parle des langages de programmation, il est souvent question de la *Turing Completeness* (caractère Turing complet) de ces derniers.
 Derrière cette expression un peu barbare se cache une idée simple : il s'agit de montrer qu'un langage de programmation est suffisamment riche pour pouvoir exprimer n'importe quel calcul. Nous ne rentrerons pas dans les détails formels qui se cachent derrière cette notion car il faudrait des centaines de lignes juste pour définir proprement le sujet (Des générations de chercheurs y travaillent encore, c'est dire !).
 
-Maintenant que cette terminologie est introduite, pourquoi diable nous intéressons nous à ce sujet dans un article sur Brainfuck ? Eh bien figurez vous que ce langage de programmation a le bon goût d'être complet au sens de Turing. Malgré son aspect très rudimentaire, il est théoriquement suffisamment riche pour exprimer à peu près ce qu'on veut.
+Maintenant que cette terminologie est introduite, pourquoi diable nous intéressons nous à ce sujet dans un article sur Brainfuck ? Eh bien figurez-vous que ce langage de programmation a le bon goût d'être complet au sens de Turing. Malgré son aspect très rudimentaire, il est théoriquement suffisamment riche pour exprimer à peu près ce qu'on veut.
 
 Or, il se trouve que prouver la complétude d'un langage de programmation peut être une tâche assez ardue. L'une des manières simples et de procéder par équivalence avec un langage dont on connaît déjà le caractère Turing Complet. Dans notre cas, nous voulions démontrer la complétude d'un langage d'assemblage en cours d'élaboration : le langage Eva. Pour se faire, nous avons implémenté un compilateur Brainfuck vers Eva.
 
@@ -31,14 +31,14 @@ Le langage Eva est un langage développé par l'association [CodeAnon](https://g
 + `PUSH/POP` : opération sur la pile
 + `IN/OUT` : Entrées / Sorties
 + `CMP` : comparaison
-+ `BEQ/BNEQ/BLE/BLT` : branchement conditionnels
++ `BEQ/BNEQ/BLE/BLT` : branchement conditionnel
 
 ## ... et du langage Brainfuck
 
-Le langage brainfuck est prévu pour s'éxecuter sur une machine contenant des "cellules" de mémoire. On pourra également manipuler une tête de lecture écriture permettant de mettre à jour le contenu de ces cellules. Cette tête est appellée *data pointer*.
+Le langage brainfuck est prévu pour s'exécuter sur une machine contenant des "cellules" de mémoire. On pourra également manipuler une tête de lecture écriture permettant de mettre à jour le contenu de ces cellules. Cette tête est appelée *data pointer*.
 
-+ `+` : Incrémente de 1 la valeur dans la cellule pointé par le *data pointer*
-+ `-` : décrémente de 1 la valeur dans la cellule pointé par le *data pointer*
++ `+` : Incrémente de 1 la valeur dans la cellule pointée par le *data pointer*
++ `-` : décrémente de 1 la valeur dans la cellule pointée par le *data pointer*
 + `>` : décale le *data pointer* d'une cellule vers la droite.
 + `<` : décale le *data pointer* d'une cellule vers la gauche.
 + `[` : début d'une boucle **while** qui s'arrête lorsque le *data pointer* pointe une cellule de valeur 0.
@@ -105,7 +105,7 @@ program -> instruction program
 
 **Remarque** : On a ici nommé les symboles élémentaires du langage Brainfuck pour garder une cohérence avec les [déclarations de types]() qui suivront.
 
-Effectuons l'analyze syntaxique du programme suivant selon cette grammaire :
+Effectuons l'analyse syntaxique du programme suivant selon cette grammaire :
 
 ```brainfuck
 +++[->+<]
@@ -115,7 +115,7 @@ Effectuons l'analyze syntaxique du programme suivant selon cette grammaire :
 program ( Incr, Incr, Incr, loop( Decr, Shift_right, Incr, Shift_left ) )
 ```
 
-On pourra aussi remarquer que cette grammaire ne permet pas à priori de décrire des programmes brainfuck invalides :
+On pourra aussi remarquer que cette grammaire ne permet pas a priori de décrire des programmes brainfuck invalides :
 
 ```brainfuck
 Programme invalide :
@@ -131,8 +131,8 @@ En **Rust** la structure des programmes se traduit par la déclaration de type �
 pub enum Command {
 	Inc(usize),
 	Dec(usize),
-	Shift_left(usize),
-	Shift_right(usize),
+	ShiftLeft(usize),
+	ShiftRight(usize),
 	Loop(Vec<Command>)
 	Input,
 	Output,
@@ -142,7 +142,7 @@ pub enum Command {
 pub Program = Vec<Command>
 ```
 
-On accompagnera cette définition de type d'un analyseur syntaxique construit à l'aider du module spécialisé [rust-peg](https://github.com/kevinmehall/rust-peg). Nous ne rentrerons pas dans les détails du code, mais nous pouvons voir que - mis de côté les détails techniques liés au langage Rust - ce morceau de code est une traduction de la grammaire du langage Brainfuck décrite précédemment. 
+On accompagnera cette définition de type d'un analyseur syntaxique construit à l'aider du module spécialisé [rust-peg](https://github.com/kevinmehall/rust-peg). Nous ne rentrerons pas dans les détails du code, mais nous pouvons voir que - mis de côté les détails techniques liés au langage Rust - ce morceau de code est une traduction de la grammaire du langage Brainfuck décrite précédemment.
 
 
 ```rust
@@ -177,18 +177,12 @@ peg::parser! {
 
 Construire une représentation des programmes est une première étape. Cette étape terminée, il reste à générer le code Eva à partir de la représentation du programme Brainfuck. La génération du code se traduit par une fonction qui reçoit en entré la représentation du programme Brainfuck et donne en sortie un programme Eva (sous forme de texte).
 
-Avant d'entamer les détails de l'implementation d'une telle fonction, rappelons que le langage Brainfuck est requiert l'usage d'un *data pointer* et d'un ensemble de cellules de mémoire. Il faut donc se poser la question de comment simuler ce deux éléments ?
+Avant d'entamer les détails de l'implémentation d'une telle fonction, rappelons que le langage Brainfuck requiert l'usage d'un *data pointer* et d'un ensemble de cellules de mémoire. Il faut donc se poser la question de comment simuler ce deux éléments ?
 
-+ Nous fixons le *data pointer* comme étant la valeur contenu dans le registre n°1 de la machine Eva (R1)?
-+ La mémoire de la machine Eva est utilisée à la fois pour charger le programme, et comme zone de lecture /écriture pour les programmes brainfuck. Les mots mémoire de Eva ont une taille de 32-bits, par soucis de simplicité, nous avons donc fixé la taille des cellules à 32 bits pour avoir une équivalence directe entre cellule mémoire au sens de brainfuck et unité de mémoire au sens de Eva. Notons que les machines Brainfuck mettent généralement à disposition des cellules de 8 bits (juste assez pour contenir des caractères ascii).
++ Nous fixons le *data pointer* comme étant la valeur contenue dans le registre n°1 de la machine Eva (R1) ?
++ La mémoire de la machine Eva est utilisée à la fois pour charger le programme, et comme zone de lecture /écriture pour les programmes brainfuck. Les cases mémoires de Eva ont une taille de 32-bits, par soucis de simplicité, nous avons donc fixé la taille des cellules à 32 bits pour avoir une équivalence directe entre cellule mémoire au sens de brainfuck et unité de mémoire au sens de Eva. Notons que les machines Brainfuck mettent généralement à disposition des cellules de 8 bits (juste assez pour contenir des caractères ASCII).
 
-Un premier problème se pose déjà ! Si la mémoire de la machine Eva est à la fois le support de lecture écriture et le support de stockage des programmes, il faut assurer qu'aucune opération de modification de la mémoire ne sera réalisée sur la région contenant le programme lui même. Typiquement, il faudrait pouvoir éviter que l'instruction `+` ou `-` du langage Brainfuck ne soit exécutée alors que le *data pointer* pointe sur une case mémoire contenant.
-
-
-La structure des programmes Brainfuck étant définie de manière récursive, il est assez naturelle d'envisager cette fonction de transformation comme une fonction récursive. Nous procédons par filtrage sur le type `Program`.
-
-
-
+Un premier problème se pose déjà ! Si la mémoire de la machine Eva est à la fois le support de lecture écriture et le support de stockage des programmes, il faut assurer qu'aucune opération de modification de la mémoire ne sera réalisée sur la région contenant le programme lui-même. Typiquement, il faudrait pouvoir éviter que l'instruction `+` ou `-` du langage Brainfuck ne soit exécutée alors que le *data pointer* pointe sur une case mémoire contenant le programme en train d'être exécuté.
 
 
 # Sources
