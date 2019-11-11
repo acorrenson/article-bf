@@ -1,6 +1,5 @@
-<div style="text-align:center">
-	<img src="./banner.jpg"></img>
-</div>
+
+<div style="text-align:center"><img src="banner.jpg" /></div>
 
 # Un compilateur Brainfuck ?
 
