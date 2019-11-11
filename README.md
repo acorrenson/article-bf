@@ -176,6 +176,8 @@ peg::parser! {
 
 Construire une représentation des programmes est une première étape. Cette étape terminée, il reste à générer le code Eva à partir de la représentation du programme Brainfuck. La génération du code se traduit par une fonction qui reçoit en entré la représentation du programme Brainfuck et donne en sortie un programme Eva sous forme de texte (ou d'un executable).
 
+#### Brainfuck est la mémoire
+
 Avant d'entamer les détails de l'implémentation d'une telle fonction, rappelons que le langage Brainfuck requiert l'usage d'un *data pointer* et d'un ensemble de cellules de mémoire. Il faut donc se poser la question de comment simuler ces deux éléments.
 
 1. Nous fixons le *data pointer* comme étant la valeur contenue dans le registre n°0 de la machine Eva (R0)
@@ -209,7 +211,10 @@ Alors l'*offset* se calcul comme suit = `offset = M.(T+I) + N - 1`
 
 **Remarque 2** : On peut ajouter un niveau de fiabilité supplémentaire en générant des instructions pour la vérification du *data pointer*. Ainsi, le code Eva généré s'occupe de vérifier que la valeur du *data pointer* est valide à tout moment et ne pointe pas sur des région de la mémoire protégées. Nous discuterons plus en détails ce cette question dans la partie [discussion](#Discussion)
 
-Les problèmes liés aux spécificités de Brainfuck étant résolus, nous pouvons commencer à générer du code Eva à proprement parler. Les opérateurs sur le *data pointer* `>` et `<` sont très simples à traduire, il s'agit d'opérations arithmétique sur le register `R0` (qui par convention sert de *data pointer*).
+
+#### Les instructions arithmétiques
+
+Les opérateurs sur le *data pointer* `>` et `<` sont très simples à traduire, il s'agit d'opérations arithmétique sur le register `R0` (qui par convention sert de *data pointer*).
 
 ```arm
 	; >
@@ -218,7 +223,7 @@ Les problèmes liés aux spécificités de Brainfuck étant résolus, nous pouvo
 	SUB R0, #1
 ```
 
-Les instructions `+` et `-` sont un peu plus subtiles, il faut modifier une valeur en mémoire en passant par un registre :
+Les instructions `+` et `-` de brainfuck sont sont à peine plus complexes, elles nécessite de  modifier une valeur en mémoire en passant par un registre :
 
 ```arm
 	; +
@@ -238,7 +243,9 @@ Les instructions `+` et `-` sont un peu plus subtiles, il faut modifier une vale
 	STR R1, [R0]
 ```
 
-Les opérations d'entrée/sortie sont traduisible directement en Eva également. Rappelons que l'instruction `.` affiche le caractère ASCII stocké sous forme d'entier dans la cellule pointée par *data pointer*. L'instruction `,` lit un octet et le place dans la cellule pointée par *data pointer*.
+#### Entrées et Sorties
+
+Les opérations d'entrée/sortie sont traduisibles directement en Eva également. Rappelons que l'instruction `.` affiche le caractère ASCII stocké sous forme d'entier dans la cellule pointée par *data pointer*. L'instruction `,` lit un octet et le place dans la cellule pointée par *data pointer*. Cela donne lieu aux traductions suivantes :
 
 ```arm
 	; .
@@ -247,15 +254,11 @@ Les opérations d'entrée/sortie sont traduisible directement en Eva également.
 	IN R0
 ```
 
-**Remarque** : Ces traductions sont relativement naïves et peuvent mener à des programmes très inefficaces. Il n'est pas rares en brainfuck d'avoir de longues séquences d'instructions `+`, `-`, `>` ou `<`. Générer systématiquement une instruction Eva pour chacune de ces instructions Brainfuck mène à des codes très longs que l'on peut facilement optimiser. Par exemple, la séquence `++++++++` serait naïvement traduite comme une suite de 8 instructions `ADD R0, #1`. On peut remplacer cette suite d'instructions par `ADD R0, #8` et diviser ainsi le nombre d'instructions Eva générée. On augmente de cette façon les performances du programme Eva produit.
+**Remarque** : Ces traductions sont relativement naïves et peuvent mener à des programmes très inefficaces. sIl n'est pas rares en brainfuck d'avoir de longues séquences d'instructions `+`, `-`, `>` ou `<`. Générer systématiquement une instruction Eva pour chacune de ces instructions Brainfuck mène à des codes très longs que l'on peut facilement optimiser. Par exemple, la séquence `++++++++` serait naïvement traduite comme une suite de 8 instructions `ADD R0, #1`. On peut remplacer cette suite d'instructions par `ADD R0, #8` et diviser ainsi le nombre d'instructions Eva générée. On augmente de cette façon les performances du programme Eva produit.
 
+#### Boucles
 
-Nous avons vu comment générer le code Eva pour les instructions arithmétiques et d'entrée/sortie du langage Brainfuck, il reste à traiter le cas des boucles. Ces dernières sont beaucoup plus subtiles à traduire. Le comportement d'une boucle en brainfuck est le suivant : Tant que le *data pointer* pointe sur une valeur différente de 0, le code de la boucle est executé, si le *data pointer* pointe sur 0, alors on sort de la boucle. Pour pouvoir décrire ce comportement, il faut donc deux choses indispensables :
-
-1. pouvoir localiser le code de la boucle en particulier
-2. pouvoir localiser la première instruction après la boucle
-
-Pour permettre cela, on utilise les labels du langage Eva. On marque par un premier label le debut de la boucle et la première instruction directement après.
+Nous avons vu comment générer le code Eva pour les instructions arithmétiques et d'entrée/sortie du langage Brainfuck, il reste à traiter le cas des boucles. Ces dernières sont un peu plus subtiles à traduire. Le comportement d'une boucle en brainfuck est le suivant : Tant que le *data pointer* pointe sur une valeur différente de 0, le code de la boucle est executé, si le *data pointer* pointe sur 0, alors on sort de la boucle. Pour pouvoir décrire ce comportement, il faut donc deux choses indispensables : d'une part pouvoir localiser la première instruction du corps de la boucle, et d'autre part pouvoir localiser la première instruction directement après la boucle. Pour permettre cela, on utilise les labels du langage Eva. On marque par un premier label le debut de la boucle ainsi que la première instruction directement après.
 
 ```brainfuck
 avant [sequence] après
@@ -271,7 +274,7 @@ label_apres:
 	; instructions pour après
 ```
 
-Il faut maintenant assurer le bouclage sur les instructions du corps de la boucle. On utilise l'instruction de comparaison `CMP` ainsi que des branchements conditionnels `BNEQ/BEQ`.
+Il faut ensuite assurer le bouclage sur les instructions du corps de la boucle. On utilise l'instruction de comparaison `CMP` ainsi que des branchements conditionnels `BNEQ/BEQ`.
 
 ```arm
 label_sequence:
@@ -290,7 +293,7 @@ label_apres:
 	...
 ```
 
-Il reste un cas à éliminer, si le *data pointer* pointe déjà sur 0 avant le début de la boucle, il faut sauter les instructions du corps de la boucle :
+Notons que si le *data pointer* pointe déjà sur 0 avant le début de la boucle, il faut sauter les instructions du corps de la boucle :
 
 ```arm
 	; instructions avant
