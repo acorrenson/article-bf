@@ -72,14 +72,14 @@ La grammaire associée est la suivante :
 Alphabet = {"+", "-", "<", ">", ".", ","}
 
 # nommage des symboles élémentaires
-Incr 				-> "+"
-Decr 				-> "-"
-Shift_left 	-> "<"
+Incr        -> "+"
+Decr        -> "-"
+Shift_left  -> "<"
 Shift_right -> ">"
-Input   		-> ","
-Output  		-> "."
-Loop_beg 		-> "["
-Loop_end 		-> "]"
+Input       -> ","
+Output      -> "."
+Loop_beg    -> "["
+Loop_end    -> "]"
 
 # règle de production d'une boucle
 loop -> Loop_begin program Loop_end
@@ -193,7 +193,7 @@ Le point 1. est fixé pour garantir que la quantité de mémoire disponible est 
 Pour garantir ces deux propriétés, on calcul donc l'*offset* suivant : `offset = nb_instructions + 15 000 - 1`.
 Le code Eva généré par notre compilateur commencera donc toujours par l'en tête suivant :
 
-```
+```arm
 	MOV R0, #n
 ```
 
@@ -211,15 +211,17 @@ Alors l'*offset* se calcul comme suit = `offset = M.(T+I) + N - 1`
 
 Les problèmes liés aux spécificités de Brainfuck étant résolus, nous pouvons commencer à générer du code Eva à proprement parler. Les opérateurs sur le *data pointer* `>` et `<` sont très simples à traduire, il s'agit d'opérations arithmétique sur le register `R0` (qui par convention sert de *data pointer*).
 
-```
-	">" -> ADD R0, #1
-	"<" -> SUB R0, #1
+```arm
+	; >
+	ADD R0, #1
+	; <
+	SUB R0, #1
 ```
 
 Les instructions `+` et `-` sont un peu plus subtiles, il faut modifier une valeur en mémoire en passant par un registre :
 
-```
-	"+" ->
+```arm
+	; +
 	; chargement de la valeur pointée
 	LDR R1, [R0]
 	; incrémentation
@@ -227,7 +229,7 @@ Les instructions `+` et `-` sont un peu plus subtiles, il faut modifier une vale
 	; stockage de la valeur modifiée
 	STR R1, [R0]
 
-	"-" ->
+	; -
 	; chargement de la valeur pointée
 	LDR R1, [R0]
 	; décrémentation
@@ -238,16 +240,79 @@ Les instructions `+` et `-` sont un peu plus subtiles, il faut modifier une vale
 
 Les opérations d'entrée/sortie sont traduisible directement en Eva également. Rappelons que l'instruction `.` affiche le caractère ASCII stocké sous forme d'entier dans la cellule pointée par *data pointer*. L'instruction `,` lit un octet et le place dans la cellule pointée par *data pointer*.
 
-```
-	"." -> OUT R0
-	"," -> IN R0
+```arm
+	; .
+	OUT R0
+	; ,
+	IN R0
 ```
 
 **Remarque** : Ces traductions sont relativement naïves et peuvent mener à des programmes très inefficaces. Il n'est pas rares en brainfuck d'avoir de longues séquences d'instructions `+`, `-`, `>` ou `<`. Générer systématiquement une instruction Eva pour chacune de ces instructions Brainfuck mène à des codes très longs que l'on peut facilement optimiser. Par exemple, la séquence `++++++++` serait naïvement traduite comme une suite de 8 instructions `ADD R0, #1`. On peut remplacer cette suite d'instructions par `ADD R0, #8` et diviser ainsi le nombre d'instructions Eva générée. On augmente de cette façon les performances du programme Eva produit.
 
 
-Nous avons vus comment générer le code Eva pour les instructions arithmétiques et d'entrée/sortie du langage Brainfuck, il reste à traiter le cas des boucles. Ces dernières sont beaucoup plus subtiles à traduire.
+Nous avons vu comment générer le code Eva pour les instructions arithmétiques et d'entrée/sortie du langage Brainfuck, il reste à traiter le cas des boucles. Ces dernières sont beaucoup plus subtiles à traduire. Le comportement d'une boucle en brainfuck est le suivant : Tant que le *data pointer* pointe sur une valeur différente de 0, le code de la boucle est executé, si le *data pointer* pointe sur 0, alors on sort de la boucle. Pour pouvoir décrire ce comportement, il faut donc deux choses indispensables :
 
+1. pouvoir localiser le code de la boucle en particulier
+2. pouvoir localiser la première instruction après la boucle
+
+Pour permettre cela, on utilise les labels du langage Eva. On marque par un premier label le debut de la boucle et la première instruction directement après.
+
+```brainfuck
+avant [sequence] après
+```
+
+```arm
+	; instructions pour "avant"
+
+label_sequence:
+	; instructions pour "sequence"
+
+label_apres:
+	; instructions pour après
+```
+
+Il faut maintenant assurer le bouclage sur les instructions du corps de la boucle. On utilise l'instruction de comparaison `CMP` ainsi que des branchements conditionnels `BNEQ/BEQ`.
+
+```arm
+label_sequence:
+	; on charge la valeur pointée par le data pointer dans un registre
+	LDR R1, [R0]
+	; on compare cette valeur à 0.
+	CMP R0, #0
+	; on charge l'adresse de l'instruction de debut de sequence (première instruction dans le while)
+	; dans un registre
+	MOV R1, label_sequence
+	; si la valeur pointée est différente de 0, on saute à l'adresse de début de séquence
+	BNEQ R1
+	; sinon, on poursuit l'execution des instructions dans l'ordre
+
+label_apres:
+	...
+```
+
+Il reste un cas à éliminer, si le *data pointer* pointe déjà sur 0 avant le début de la boucle, il faut sauter les instructions du corps de la boucle :
+
+```arm
+	; instructions avant
+
+	; on charge la valeur pointée par le data pointer dans R1
+	LDR R1, [R0]
+	; on compare cette valeur à 0
+	CMP R1, #0
+	; on charge l'adresse de la première instruction après la boucle
+	LDR R1, label_apres
+	; si la valeur pointée est 0, on peut passer la boucle (et donc sauter sur label_apres)
+	BEQ R1
+	; sinon, commence à executer les instructions de la séquence
+
+label_sequence:
+	; instructions de la sequence
+	; ...
+
+label_apres:
+	; instructions après
+	; ...
+```
 
 # Résultats
 
