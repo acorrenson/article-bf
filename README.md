@@ -1,8 +1,14 @@
+<div style="text-align:center">
+	<img src="./banner.jpg"></img>
+</div>
+
 # Un compilateur Brainfuck ?
+
+Arthur Correnson <arthur.correnson@univ-tlse3.fr> & Nathan Graule <solarliner@gmail.com>
 
 # Introduction
 
-Brainfuck est un langage de programmation quelque peu ésotérique désigné par **Urban **Müller**** en 1992. Les programmes brainfuck ne sont composés que des caractères **+**, **-**, **<**, **>**, **[**, **]**, **.** et **,**.
+Brainfuck est un langage de programmation ésotérique désigné par **Urban **Müller**** en 1992. Les programmes brainfuck ne sont composés que des caractères **+**, **-**, **<**, **>**, **[**, **]**, **.** et **,**.
 
 Voici un exemple du fameux "hello world" en bf :
 
@@ -258,7 +264,7 @@ Les opérations d'entrée/sortie sont traduisibles directement en Eva également
 
 #### Boucles
 
-Nous avons vu comment générer le code Eva pour les instructions arithmétiques et d'entrée/sortie du langage Brainfuck, il reste à traiter le cas des boucles. Ces dernières sont un peu plus subtiles à traduire. Le comportement d'une boucle en brainfuck est le suivant : Tant que le *data pointer* pointe sur une valeur différente de 0, le code de la boucle est executé, si le *data pointer* pointe sur 0, alors on sort de la boucle. Pour pouvoir décrire ce comportement, il faut donc deux choses indispensables : d'une part pouvoir localiser la première instruction du corps de la boucle, et d'autre part pouvoir localiser la première instruction directement après la boucle. Pour permettre cela, on utilise les labels du langage Eva. On marque par un premier label le debut de la boucle ainsi que la première instruction directement après.
+Nous avons vu comment générer le code Eva pour les instructions arithmétiques et d'entrée/sortie du langage Brainfuck, il reste à traiter le cas des boucles. Ces dernières sont un peu plus subtiles à traduire. Le comportement d'une boucle en brainfuck est le suivant : Tant que le *data pointer* pointe sur une valeur différente de 0, le code de la boucle est executé, si le *data pointer* pointe sur 0, alors on sort de la boucle. Pour pouvoir décrire ce comportement, il faut donc deux choses indispensables : d'une part pouvoir localiser la première instruction du corps de la boucle, d'autre part pouvoir localiser la première instruction directement après la boucle. Pour permettre cela, on utilise les labels du langage Eva. On marque par un premier label le debut de la boucle ainsi que la première instruction directement après.
 
 ```brainfuck
 avant [sequence] après
